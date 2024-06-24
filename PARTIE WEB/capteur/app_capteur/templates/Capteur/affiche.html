@@ -1,0 +1,35 @@
+{% extends "main/main.html" %}
+{% load static %}
+{% block title %}
+Index du site 
+{% endblock %}
+
+{% block titre %}
+Informations sur l'Enseignant
+{% endblock titre %}
+
+{% block meta %}
+<meta http-equiv='Refresh' content='10'>
+{% endblock meta %}
+
+{% block content %}
+<section class="infocapteur">
+
+
+    <div>
+        <a href="/" class="capteur-link">RETOUR</a>
+        <br> <br>
+
+        Capteur : {{capteur.nom_capteur}} <br> <br>
+        
+        Emplacement : {{capteur.pieces}}
+
+        <h1>Temperature Data</h1>
+        <h1 id='nondispo'>{{ nondispo }}</h1>
+        <div id="graph">
+            
+            {{ graph_html|safe }}
+        </div>
+    </div>
+
+{% endblock %}

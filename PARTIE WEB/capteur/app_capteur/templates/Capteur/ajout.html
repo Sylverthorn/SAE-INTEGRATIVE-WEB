@@ -1,0 +1,21 @@
+{% extends "main/main.html" %}
+{% block title %}
+Index du site 
+{% endblock %}
+
+
+{% block titre %}
+    Nouveau Capteur
+{% endblock titre %}
+
+{% block content %}
+<div class="form-container">
+    <form method="post" action="/updatetraitement/{{ id_capteur }}/">
+        {% csrf_token %}
+        <ul>
+            {{ form.as_ul }} 
+        </ul>
+        <input type="submit" value="Envoyer les données" class="submit-button"/>
+    </form>
+</div>
+{% endblock %}

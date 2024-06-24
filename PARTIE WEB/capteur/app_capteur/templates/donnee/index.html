@@ -1,0 +1,63 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="{% static "capteur/style.css" %}">
+    <title>{% block titre %}{% endblock titre %}</title>
+</head>
+<body>
+    <a href="/" class="capteur-link">CAPTEUR</a>
+    <a href="/donnee/reset/" class="capteur-link">RESET</a>
+    <a href="/donnee/export/" class="capteur-link">EXPORTER</a>
+    <h1>DONNEE</h1>
+    {% if js_enabled %}
+    <a href="/donnee/?js=false" class="capteur-link">Desactiver le rafraichissement</a>
+    {% else %}
+    <a href="/donnee/?js=true" class="capteur-link">Activer le rafraichissement</a>
+    {% endif %}
+
+
+    {% if js_enabled %}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function(){
+            setInterval(function(){
+                $("#table").load(window.location.href + " #table > *");
+            }, 5000);
+        });
+    </script>
+    {% endif %}
+    
+    <form method="get" class='filtre'>
+        {{ form.as_p }}
+        <button type="submit">Filtrer</button>
+    </form>
+    
+    <div class="table-container" id="table">
+        <table>
+            <thead>
+                <tr>
+                    <th>Maison</th>
+                    <th>Capteur</th>
+                    <th>Pièces</th>
+                    <th>Timestamp</th>
+                    <th>Temperature</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for l in liste_donnee %}
+                <tr>
+                    <td>{{ l.id_capteur.maison }}</td>
+                    <td>{{ l.id_capteur }}</td>
+                    <td>{{ l.id_capteur.pieces }}</td>
+                    <td>{{ l.timestamp|date:"d/m/Y H:i:s" }}</td>
+                    <td>{{ l.temperature }} °C</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>

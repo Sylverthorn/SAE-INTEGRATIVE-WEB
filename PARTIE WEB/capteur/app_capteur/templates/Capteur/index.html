@@ -1,0 +1,39 @@
+{% extends 'main/main.html' %}
+
+
+
+{% block content %}
+
+
+<a href="/donnee/" class='capteur-link'>DONNEE</a>
+
+
+<h1>CAPTEUR</h1>
+<div class="table-container">
+    <table>
+        <thead>
+            <tr>
+                <th>Nom Capteur</th>
+                <th>Emplacement</th>
+                <th>Maison</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for l in liste_capteur %}
+            <tr>
+                <td><a href="/graph/{{l.id_capteur}}">{{ l.nom_capteur }}</a></td>
+                <td>{{ l.pieces}}</td>
+                <td>{{ l.maison }}</td>
+                <td>
+                    <a href="/update/{{ l.id_capteur }}/" class="bouton">Update</a>
+                    <a href="/delete/{{ l.id_capteur }}/" class="bouton">Delete</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+
+{% endblock %}
