@@ -2,23 +2,35 @@ import paho.mqtt.client as mqtt
 import mysql.connector
 from mysql.connector import Error
 import datetime
-import json
-import os
+from datetime import datetime as dt
+from cachetools import TTLCache 
+import threading
+import time
 
-# Configuration des brokers
+# Configuration des brokers et topics
 brokers = ["test.mosquitto.org"]
 topics = ["IUT/Colmar2024/SAE2.04/Maison1", "IUT/Colmar2024/SAE2.04/Maison2"]
-cache_file = "cache.json"
 
-# Database connection
-def create_connection(host_name, user_name, user_password, db_name):
+# Configuration du cache avec TTL 
+cache = TTLCache(maxsize=1000, ttl=300)  
+
+# Configuration de la base de données
+db_config = {
+    'host': '192.168.74.135',
+    'user': 'djangoUser',
+    'password': 'toto',
+    'database': 'test2'
+}
+
+# DdB
+def create_connection():
     connection = None
     try:
         connection = mysql.connector.connect(
-            host=host_name,
-            user=user_name,
-            passwd=user_password,
-            database=db_name
+            host=db_config['host'],
+            user=db_config['user'],
+            passwd=db_config['password'],
+            database=db_config['database']
         )
         print("Connection to MySQL DB successful")
     except Error as e:
@@ -26,36 +38,13 @@ def create_connection(host_name, user_name, user_password, db_name):
     return connection
 
 def execute_query(connection, query):
+    cursor = connection.cursor()
     try:
-        cursor = connection.cursor()
         cursor.execute(query)
         connection.commit()
         print("Query executed successfully")
     except Error as e:
         print(f"The error '{e}' occurred")
-        cache_query(query)
-
-def cache_query(query):
-    if os.path.exists(cache_file):
-        with open(cache_file, 'r') as file:
-            cache = json.load(file)
-    else:
-        cache = []
-    
-    cache.append(query)
-    
-    with open(cache_file, 'w') as file:
-        json.dump(cache, file)
-
-def execute_cached_queries(connection):
-    if os.path.exists(cache_file):
-        with open(cache_file, 'r') as file:
-            cache = json.load(file)
-        
-        for query in cache:
-            execute_query(connection, query)
-        
-        os.remove(cache_file)
 
 def insert_capteur(connection, id_capteur, nom_capteur, pieces, maison):
     query = f"""
@@ -82,8 +71,10 @@ def on_message(client, userdata, msg):
     message = msg.payload.decode()
     Topic = msg.topic
     print(f"Topic: {Topic}\nMessage: {message}\n")
+    process_message(message, Topic)
 
-    maison_part = Topic.split('/')
+def process_message(message, topic):
+    maison_part = topic.split('/')
     maison = maison_part[3]
 
     parts = message.split(',')
@@ -109,12 +100,29 @@ def on_message(client, userdata, msg):
         print(f"Capteur {id_capteur} ignoré. Ne sera pas inséré dans la base de données.")
     else:
         print(id_capteur, nom_capteur, pieces, date, heure, temperature)
-        insert_capteur(connection, id_capteur, nom_capteur, pieces, maison)
-        insert_donnee(connection, id_capteur, formatted_timestamp, temperature)
+        print('inserer dans le cache')
+        cache_key = f"{id_capteur}_{timestamp}"
+        cache[cache_key] = (id_capteur, nom_capteur, pieces, maison, timestamp, temperature)
+        retry_cached_data()
+
+def retry_cached_data():
+    connection = create_connection()
+    if connection is None:
+        print("Impossible de se connecter à la base de données.")
+        return
+    for key in list(cache):
+        id_capteur, nom_capteur, pieces, maison, timestamp, temperature = cache[key]
+        try:
+            insert_capteur(connection, id_capteur, nom_capteur, pieces, maison)
+            insert_donnee(connection, id_capteur, timestamp, temperature)
+            del cache[key]  # Supprimer du cache après insertion réussie
+            print(f"Données insérées avec succès depuis le cache: {key}")
+        except Error:
+            print(f"Erreur lors de la réinsertion des données depuis le cache")
+            break
+
 
 clients = []
-connection = create_connection("192.168.74.135", "djangoUser", "toto", "test2")
-execute_cached_queries(connection)
 
 for broker in brokers:
     client = mqtt.Client()
@@ -128,7 +136,7 @@ for client in clients:
 
 try:
     while True:
-        pass
+        time.sleep(1)
 except KeyboardInterrupt:
     for client in clients:
         client.loop_stop()
