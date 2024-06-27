@@ -1,4 +1,0 @@
-2024-06-19 12:10:19.023655 - Topic: IUT/Colmar2024/SAE2.04/Maison1 - Message: gfy
-2024-06-19 12:10:44.843572 - Topic: IUT/Colmar2024/SAE2.04/Maison1 - Message: salut commyfelivrzlivlieuv
-2024-06-19 12:11:35.996024 - Topic: IUT/Colmar2024/SAE2.04/Maison2 - Message: salut commyfelivrzlivlieuv
-2024-06-19 12:11:41.817626 - Topic: IUT/Colmar2024/SAE2.04/Maison2 - Message: salut commyfelivrzlivlieuvf-----------------------------
